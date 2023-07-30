@@ -12,9 +12,11 @@ export async function InsertRentals(req, res) {
     const GameExists = await db.query(`SELECT * FROM games WHERE id = $1;`, [gameId]);
     if (GameExists.rowCount < 1) return res.sendStatus(400);
 
-    const GameStock = GameExists.rows[0].stockTotal;
     const GamePrice = GameExists.rows[0].pricePerDay;
     const originalPrice = daysRented * GamePrice;
+
+    const GameStock = GameExists.rows[0].stockTotal;
+
     const OpenRentals = await db.query(`SELECT COUNT(*) FROM rentals WHERE "gameId" = $1 AND "returnDate" IS NULL;`, [
       gameId,
     ]);
@@ -71,6 +73,47 @@ export async function GetRentals(req, res) {
     }));
 
     res.send(processedRentals);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+}
+
+export async function FinishRental(req, res) {
+  const { id } = req.params;
+  let delayFee = 0;
+  const returnDateFormatted = dayjs("2023-08-02");
+
+  try {
+    const rental = await db.query(
+      `SELECT
+      TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+      rentals."daysRented",
+      TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
+      rentals."originalPrice",
+      games."pricePerDay"
+      FROM rentals 
+      JOIN games ON games.id=rentals.id 
+      WHERE rentals.id=$1`,
+      [id]
+    );
+    if (rental.rowCount < 1) return res.sendStatus(404);
+
+    const { daysRented, pricePerDay, rentDate, returnDate } = rental.rows[0];
+    if (returnDate !== null) return res.sendStatus(400);
+
+    const daysReturn = returnDateFormatted.diff(rentDate, "day");
+
+    if (daysReturn > daysRented) {
+      const daysFee = daysReturn - daysRented;
+      delayFee = daysFee * pricePerDay;
+    }
+
+    await db.query(`UPDATE rentals SET "returnDate"=$1, "delayFee"=$2 WHERE id=$3`, [
+      returnDateFormatted,
+      delayFee,
+      id,
+    ]);
+    res.sendStatus(200);
   } catch (error) {
     res.status(500).send(error.message);
   }
