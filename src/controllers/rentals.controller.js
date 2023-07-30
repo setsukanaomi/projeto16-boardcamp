@@ -81,7 +81,7 @@ export async function GetRentals(req, res) {
 export async function FinishRental(req, res) {
   const { id } = req.params;
   let delayFee = 0;
-  const returnDateFormatted = dayjs("2023-08-02");
+  const returnDateFormatted = dayjs();
 
   try {
     const rental = await db.query(
