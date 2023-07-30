@@ -42,7 +42,7 @@ export async function GetRentals(req, res) {
     rentals."gameId",
     TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
     rentals."daysRented",
-    rentals."returnDate",
+    TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
     rentals."originalPrice",
     rentals."delayFee",
     customers.id AS "idCustomer",
@@ -92,7 +92,7 @@ export async function FinishRental(req, res) {
       rentals."originalPrice",
       games."pricePerDay"
       FROM rentals 
-      JOIN games ON games.id=rentals.id 
+      JOIN games ON games.id=rentals."gameId"
       WHERE rentals.id=$1`,
       [id]
     );
