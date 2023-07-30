@@ -99,7 +99,7 @@ export async function FinishRental(req, res) {
     if (rental.rowCount < 1) return res.sendStatus(404);
 
     const { daysRented, pricePerDay, rentDate, returnDate } = rental.rows[0];
-    if (returnDate !== null) return res.sendStatus(400);
+    if (returnDate === null) return res.sendStatus(400);
 
     const daysReturn = returnDateFormatted.diff(rentDate, "day");
 
