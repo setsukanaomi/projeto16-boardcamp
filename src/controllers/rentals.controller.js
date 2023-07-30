@@ -99,7 +99,7 @@ export async function FinishRental(req, res) {
     if (rental.rowCount < 1) return res.sendStatus(404);
 
     const { daysRented, pricePerDay, rentDate, returnDate } = rental.rows[0];
-    if (returnDate === null) return res.sendStatus(400);
+    if (returnDate !== null) return res.sendStatus(400);
 
     const daysReturn = returnDateFormatted.diff(rentDate, "day");
 
@@ -127,7 +127,7 @@ export async function DeleteRental(req, res) {
     if (rental.rowCount < 1) return res.sendStatus(404);
 
     const formattedRental = rental.rows[0];
-    if (formattedRental.returnDate !== null) return res.sendStatus(400);
+    if (formattedRental.returnDate === null) return res.sendStatus(400);
 
     await db.query(`DELETE FROM rentals WHERE id=$1`, [id]);
     res.sendStatus(200);
